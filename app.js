@@ -26,43 +26,38 @@ const rooms = {}; // To store active rooms and their data
 io.on('connection', (socket) => {
   console.log('A user connected');
 
-  // Teacher creates a room
-  socket.on('create-room', (data) => {
-    const { roomId, teacherLocation, subject, session, time } = data;
+  // Teacher creates a new room
+  socket.on('createRoom', (roomData) => {
+    const { roomId, subject, session, time } = roomData;
     rooms[roomId] = {
-      teacherLocation,
       subject,
       session,
       time,
-      attendance: [],
+      attendees: [] // Initially empty list of attendees
     };
-    socket.join(roomId);
-    console.log(`Room ${roomId} created by teacher`);
+
+    console.log(`Room created: ${roomId}`);
+    socket.emit('roomCreated', { roomId, message: 'Room created successfully' });
   });
 
   // Student joins a room
-  socket.on('student-join', (data) => {
-    const { roomId, studentId, studentName, studentLocation } = data;
-    const room = rooms[roomId];
+  socket.on('joinRoom', (data) => {
+    const { roomId, studentName, studentId } = data;
 
-    if (!room) {
-      socket.emit('attendance-error', 'Room not found');
-      return;
+    if (rooms[roomId]) {
+      const room = rooms[roomId];
+
+      // Add student to room attendance
+      room.attendees.push({ studentName, studentId });
+      console.log(`${studentName} joined room ${roomId}`);
+
+      // Notify all clients (e.g., teacher) about the updated attendance
+      io.emit('attendanceUpdate', room.attendees);
+
+      socket.emit('joinedRoom', { roomId, message: 'Joined the room successfully' });
+    } else {
+      socket.emit('error', { message: 'Room not found' });
     }
-
-    const { validateGPS } = require('./utils/gpsValidation');
-    if (!validateGPS(room.teacherLocation, studentLocation)) {
-      socket.emit('attendance-error', 'You are not near the teacher');
-      return;
-    }
-
-    room.attendance.push({
-      studentId,
-      studentName,
-      timestamp: new Date().toISOString(),
-    });
-
-    socket.emit('attendance-success', 'Attendance marked successfully!');
   });
 
   // Teacher ends a room
