@@ -40,6 +40,30 @@ io.on('connection', (socket) => {
     socket.emit('roomCreated', { roomId, message: 'Room created successfully' });
   });
 
+  // Handle request for checking attendance
+  socket.on('checkAttendance', (roomId) => {
+    if (rooms[roomId]) {
+      // Emit the list of attendees for the requested room to the teacher
+      const attendees = rooms[roomId].attendees;
+      socket.emit('attendanceUpdate', attendees); // Emit only to the requesting teacher
+    } else {
+      // Room not found
+      socket.emit('error', { message: 'Room not found' });
+    }
+  });
+
+  // Handle request for checking attendance
+  socket.on('downloadAttendence', (roomId) => {
+    if (rooms[roomId]) {
+      // Emit the list of attendees for the requested room to the teacher
+      const attendees = rooms[roomId].attendees;
+      socket.emit('downloadAttendenceUpdate', attendees); // Emit only to the requesting teacher
+    } else {
+      // Room not found
+      socket.emit('error', { message: 'Room not found' });
+    }
+  });
+
   // Student joins a room
   socket.on('joinRoom', (data) => {
     const { roomId, studentName, studentId } = data;
@@ -51,8 +75,11 @@ io.on('connection', (socket) => {
       room.attendees.push({ studentName, studentId });
       console.log(`${studentName} joined room ${roomId}`);
 
-      // Notify all clients (e.g., teacher) about the updated attendance
-      io.emit('attendanceUpdate', room.attendees);
+      // Add the student to the room in Socket.IO (roomId is the identifier)
+      socket.join(roomId);
+
+      // Notify only the clients in the room (e.g., teacher and students in that room)
+      io.to(roomId).emit('attendanceUpdate', room.attendees);
 
       socket.emit('joinedRoom', { roomId, message: 'Joined the room successfully' });
     } else {
@@ -67,14 +94,11 @@ io.on('connection', (socket) => {
       socket.emit('room-error', 'Room not found');
       return;
     }
-
-    const { exportToExcel } = require('./utils/excelExport');
-    await exportToExcel(room.attendance, roomId);
-
     delete rooms[roomId];
     console.log(`Room ${roomId} ended`);
   });
 
+  // Disconnect event
   socket.on('disconnect', () => {
     console.log('User disconnected');
   });
