@@ -14,6 +14,18 @@ const io = new Server(server, {
 
 const rooms = {}; // To store active rooms and their data
 
+
+// Function to log the number of connected users and rooms
+function logServerStats() {
+  console.log('--- Server Stats ---');
+  console.log(`Connected Users: ${io.engine.clientsCount}`);
+  console.log(`Active Rooms: ${rooms}`);
+  console.log('--------------------');
+}
+
+// Log server stats every 5 minutes
+setInterval(logServerStats, 5 * 60 * 1000); // 5 minutes in milliseconds
+
 io.on('connection', (socket) => {
   console.log('A user connected');
   console.log(`Currently connected users: ${io.engine.clientsCount}`);
@@ -21,7 +33,7 @@ io.on('connection', (socket) => {
   // Teacher creates and joins a room
   socket.on('createRoom', (roomData) => {
   const { roomId, subjectCode, section, duration, location, createdAt } = roomData;
-  console.log(roomData);
+  // console.log(roomData);
 
   // Check if the room already exists
   if (rooms[roomId]) {
@@ -40,9 +52,9 @@ io.on('connection', (socket) => {
     ],
   };
 
-  console.log(rooms[roomId]);
+  // console.log(rooms[roomId]);
 
-  console.log(`Room created and joined: ${roomId} with subject ${subjectCode}`);
+   console.log(`Room created: ${roomId} with subject ${subjectCode}`);
 
   // Notify the teacher of successful creation and joining
   socket.emit('roomCreated', {
@@ -51,21 +63,9 @@ io.on('connection', (socket) => {
   });
 
   });
-  // Handle request for checking attendance
-  socket.on('checkAttendance', (roomId) => {
-    if (rooms[roomId]) {
-      // Emit the list of attendees for the requested room to the teacher
-      const attendees = rooms[roomId].attendees;
-      socket.emit('attendanceUpdate', attendees); // Emit only to the requesting teacher
-    } else {
-      // Room not found
-        socket.emit('roomNotFound');
-      socket.emit('error', { message: 'Room not found' });
-    }
-  });
     // Handle request for checking attendance
   socket.on('getRoomData', (roomId) => {
-    console.log(roomId, rooms);
+    // console.log(roomId, rooms);
     if (rooms[roomId]) {
       // Emit the list of attendees for the requested room to the teacher
       const roomData = rooms[roomId];
@@ -81,19 +81,16 @@ io.on('connection', (socket) => {
     const room = rooms[roomID]; // Fetch the room from the rooms object
   
     if (!room) {
-      console.log("Room not found JOIN")
+      // console.log("Room not found JOIN")
       socket.emit('roomNotFound');
       socket.emit("error", { message: "Room not found" });
       return;
     }
   
-    console.log(`Teacher joined room ${roomID}`);
+    // console.log(`Teacher joined room ${roomID}`);
   
     // Add the teacher to the room in Socket.IO (roomId is the identifier)
     socket.join(roomID);
-  
-    // Notify only the clients in the room (e.g., teacher and students in that room)
-    io.to(roomID).emit('attendanceUpdate', room.attendees);
   
     socket.emit('joinedRoom', { roomID, message: 'Joined the room successfully' });
   });
@@ -109,12 +106,11 @@ io.on('connection', (socket) => {
       // Add student to room attendance
       room.attendees.push({ studentName, studentId, attendenceStatus, studentTime});
 
-      console.log(`${studentName} joined room ${roomId}`);
+      // console.log(`${studentName} joined room ${roomId}`);
       // Add the student to the room in Socket.IO (roomId is the identifier)
       socket.emit("studentAttended", {studentName, studentId})
       socket.to(roomId).emit("studentAttendedAll", {studentName, studentId, attendenceStatus, studentTime})
       // Notify only the clients in the room (e.g., teacher and students in that room)
-      io.to(roomId).emit('attendanceUpdate', room.attendees);
     } else {
       socket.emit('error', { message: 'Room not found' });
     }
