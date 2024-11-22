@@ -32,7 +32,7 @@ io.on('connection', (socket) => {
 
   // Teacher creates and joins a room
   socket.on('createRoom', (roomData) => {
-  const { roomId, subjectCode, section, duration, location, createdAt } = roomData;
+  const { roomId, subjectCode, section, duration, location, createdAt, limitAttendence, maxDistance, lateThreshold } = roomData;
   // console.log(roomData);
 
   // Check if the room already exists
@@ -48,6 +48,9 @@ io.on('connection', (socket) => {
     duration,
     location,
     createdAt,
+    limitAttendence,
+    maxDistance,
+    lateThreshold,
     attendees: [
     ],
   };
