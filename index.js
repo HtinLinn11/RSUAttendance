@@ -17,7 +17,7 @@ const rooms = {}; // To store active rooms and their data
 
 // Function to log the number of connected users and rooms
 function logServerStats() {
-  console.log('--- Server Stats ---');
+  console.log('--- Server Active ---');
   console.log(`Connected Users: ${io.engine.clientsCount}`);
   console.log(`Active Rooms: ${rooms}`);
   console.log('--------------------');
@@ -58,6 +58,10 @@ io.on('connection', (socket) => {
   // console.log(rooms[roomId]);
 
    console.log(`Room created: ${roomId} with subject ${subjectCode}`);
+  // Listen for the "ping" event from the client
+  socket.on('ping', (roomId) => {
+    console.log('Room with ID', roomId, "still active.");
+    socket.emit('pong')}); 
 
   // Notify the teacher of successful creation and joining
   socket.emit('roomCreated', {
@@ -102,7 +106,7 @@ io.on('connection', (socket) => {
   // Student joins a room
   socket.on('recordAttendence', (data) => {
     const { roomId, studentName, studentId, attendenceStatus, studentTime } = data;
-    console.log(data);
+    //console.log(data);
 
     if (rooms[roomId]) {
       const room = rooms[roomId];
@@ -123,7 +127,7 @@ io.on('connection', (socket) => {
   socket.on('end-room', async (roomId) => {
     const room = rooms[roomId];
     if (!room) {
-      console.log("Room not found")
+      //console.log("Room not found")
       socket.emit('roomNotFound');
       socket.emit('error', 'Room not found');
       return;
