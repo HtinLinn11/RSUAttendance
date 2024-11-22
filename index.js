@@ -18,12 +18,25 @@ const io = new Server(server, {
 
 const rooms = {}; // To store active rooms and their data
 
+// Function to remove rooms with no active connections
+function cleanEmptyRooms() {
+  for (const roomId in rooms) {
+    const room = rooms[roomId];
+    const connectedClients = io.sockets.adapter.rooms.get(roomId);
+    // If there are no active users in the room, delete it
+    if (!connectedClients || connectedClients.size === 0) {
+      console.log(`Cleaning up empty room: ${roomId}`);
+      delete rooms[roomId];
+    }
+  }
+}
 
 // Function to log the number of connected users and rooms
 function logServerStats() {
   console.log('--- Server Active ---');
+  cleanEmptyRooms()
   console.log(`Connected Users: ${io.engine.clientsCount}`);
-  console.log(`Active Rooms: ${rooms}`);
+  console.log(`Active Rooms Count: ${Object.keys(rooms).length}`);
   console.log('--------------------');
 }
 
