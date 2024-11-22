@@ -7,7 +7,11 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL, // Example: 'https://your-client.netlify.app'
+    origin: [
+      process.env.CLIENT_URL_LOCAL,  // First allowed URL
+      process.env.CLIENT_URL_NETLIFY,  // Second allowed URL
+      process.env.CLIENT_URL_EXTRA,  // Third allowed URL
+    ],
     methods: ['GET', 'POST'],
   },
 });
