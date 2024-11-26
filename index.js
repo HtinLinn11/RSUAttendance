@@ -145,13 +145,14 @@ io.on('connection', (socket) => {
   socket.on('end-room', async (roomId) => {
     const room = rooms[roomId];
     if (!room) {
-      //console.log("Room not found")
+      console.log("Room not found")
       socket.emit('roomNotFound');
       socket.emit('error', 'Room not found');
       return;
     }
     delete rooms[roomId];
-    console.log(`Room ${roomId} ended`);
+    console.log(`Room ${roomId} ended`);  // Emit success event back to the client
+    socket.emit('end-room-success');
   });
 
   // Disconnect event
